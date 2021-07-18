@@ -16,7 +16,8 @@ typedef struct _Request {
    char* method;
    char* url;
    char* body;
-   Header headers[];
+   // Golang does not recognize an C-array type with c-style syntax..
+   Header* headers;
 } Request;
 
 #ifdef __cplusplus

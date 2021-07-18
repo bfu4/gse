@@ -5,6 +5,7 @@ import (
     // #include <http-signatures.h>
     "C"
     "unsafe"
+    "reflect"
     "gsego/mytls"
     http "net/http"
     "strings"
@@ -19,25 +20,23 @@ func CreateJA3Transport(ja3 *C.char) unsafe.Pointer {
 }
 
 //export SendRequest
-func SendRequest(transport interface{}, creq *C.Request) unsafe.Pointer {
+func SendRequest(transport unsafe.Pointer, creq *C.Request) unsafe.Pointer {
 	methodString := C.GoString(creq.method)
 	site := C.GoString(creq.url)
 	body := C.GoString(creq.body)
-	asserted := transport.(*http.Transport)
-
-	// golang voodoo
-	var tripper http.RoundTripper
-	tripper = asserted
-
-	client := http.Client{Transport: tripper}
+	asserted := (*http.Transport) (rawType(transport))
+	casted := **(**http.RoundTripper) (rawType(asserted))
+	client := http.Client{Transport: casted}
 	rdr := strings.NewReader(body)
 	req, err := http.NewRequest(methodString, site, rdr)
+
 	if err != nil {
 		return unsafe.Pointer(nil)
 	}
 
 	// handle headers
-	setHeaders(req, *creq.headers)
+	hdrs := **(**[]C.Header) (rawType((*creq).headers))
+	setHeaders(req, hdrs)
 
 	// todo: (@bfu4) set the data
 
@@ -47,16 +46,26 @@ func SendRequest(transport interface{}, creq *C.Request) unsafe.Pointer {
 	return unsafe.Pointer(&resp)
 }
 
+func rawType(value interface{}) unsafe.Pointer {
+	gil := reflect.ValueOf(value)
+	ptr := gil.Pointer()
+	addrof := struct {
+		addr uintptr
+	}{ptr}
+	veryRaw := unsafe.Pointer(&addrof)
+	return veryRaw
+}
+
 // setHeaders set an array of headers
 func setHeaders(req *http.Request, headers []C.Header) {
-	for k, v := range headers {
-		setHeader(req, k)
+	for _, v := range headers {
+		setHeader(req, v)
 	}
 }
 
 // setHeader set a single header
 func setHeader(req *http.Request, header C.Header) {
-	key := C.GoString(header.key)
+	key := C.GoString(header.name)
 	value := C.GoString(header.value)
 	req.Header.Set(key, value)
 }

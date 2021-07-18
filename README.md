@@ -14,7 +14,7 @@ uses like 2 files from mytls ([link](https://github.com/zedd3v/mytls/)).
 for now this program can be ran like so:
 
 ```bash
-$ GODEBUG=cgocheck=0 ./out/main
+$ GODEBUG=cgocheck=0 ./out/gsec
 ```
 
 this is because we are passing back the go pointer at the moment.
