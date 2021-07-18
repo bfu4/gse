@@ -16,7 +16,4 @@ func CreateJA3Transport(ja3 *C.char) C.long {
 	return hailMary
 }
 
-func main() {
-
-}
-
+func main() { }

@@ -11,6 +11,9 @@ uses like 2 files from mytls ([link](https://github.com/zedd3v/mytls/)).
 ## what we know
 cgo is hard :(
 
+### oh my god there is a specification (wow)
+https://docs.google.com/document/d/1nr-TQHw_er6GOQRsF6T43GGhFDelrAP0NqSS_00RgZQ/edit?pli=1
+
 ## build requirements
 * go
 * clang
