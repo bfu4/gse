@@ -1,10 +1,12 @@
 package main
 
 import (
+    // #cgo CFLAGS: -I../c/include
+    // #include <http-signatures.h>
     "C"
     "unsafe"
-    "test/mytls"
-    "http"
+    "gsego/mytls"
+    http "net/http"
     "strings"
 )
 
@@ -18,11 +20,16 @@ func CreateJA3Transport(ja3 *C.char) unsafe.Pointer {
 
 //export SendRequest
 func SendRequest(transport interface{}, creq *C.Request) unsafe.Pointer {
-	methodString := C.GoString(*creq.method)
-	site := C.GoString(*creq.url)
-	body := C.GoString(*creq.body)
+	methodString := C.GoString(creq.method)
+	site := C.GoString(creq.url)
+	body := C.GoString(creq.body)
 	asserted := transport.(*http.Transport)
-	client := http.Client{Transport: &asserted}
+
+	// golang voodoo
+	var tripper http.RoundTripper
+	tripper = asserted
+
+	client := http.Client{Transport: tripper}
 	rdr := strings.NewReader(body)
 	req, err := http.NewRequest(methodString, site, rdr)
 	if err != nil {
@@ -41,14 +48,14 @@ func SendRequest(transport interface{}, creq *C.Request) unsafe.Pointer {
 }
 
 // setHeaders set an array of headers
-func setHeaders(req http.Request, headers []C.Header) {
+func setHeaders(req *http.Request, headers []C.Header) {
 	for k, v := range headers {
 		setHeader(req, k)
 	}
 }
 
 // setHeader set a single header
-func setHeader(req http.Request, header C.Header) {
+func setHeader(req *http.Request, header C.Header) {
 	key := C.GoString(header.key)
 	value := C.GoString(header.value)
 	req.Header.Set(key, value)
